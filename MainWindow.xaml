@@ -1,0 +1,181 @@
+<Window x:Class="Vinlyo.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Vinlyo"
+        Width="252" Height="252"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        Topmost="False"
+        WindowStartupLocation="Manual"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        RenderOptions.BitmapScalingMode="HighQuality"
+        Background="{x:Null}">
+
+    <!-- Background="{x:Null}" plutot que "Transparent" : sur une fenetre en
+         AllowsTransparency, une zone sans contenu dessine n'est alors pas
+         cliquable. La zone de clic epouse donc exactement le disque, et les
+         coins de la fenetre laissent passer les clics vers le bureau. -->
+
+    <Window.Resources>
+        <!-- Ces deux pinceaux sont remplaces par le code quand la teinte de la
+             pochette change. Les references sont dynamiques : sans cela, la
+             substitution resterait sans effet. -->
+        <RadialGradientBrush x:Key="DiscBrush" GradientOrigin="0.35,0.3" Center="0.5,0.5"
+                             RadiusX="0.65" RadiusY="0.65">
+            <GradientStop Offset="0"   Color="#FF222222"/>
+            <GradientStop Offset="0.6" Color="#FF0E0E0E"/>
+            <GradientStop Offset="1"   Color="#FF050505"/>
+        </RadialGradientBrush>
+
+        <SolidColorBrush x:Key="GrooveBrush" Color="#FF1E1E1E"/>
+
+        <!-- Accent tire de la pochette. Le meme que celui de la fenetre de
+             parametres : les deux surfaces prennent la couleur du morceau. -->
+        <SolidColorBrush x:Key="AccentBrush" Color="#FFB9AF9E"/>
+    </Window.Resources>
+
+    <Window.ContextMenu>
+        <ContextMenu>
+            <MenuItem Header="Paramètres…" Click="OnOpenSettings"/>
+            <Separator/>
+            <MenuItem x:Name="LockItem" Header="Verrouiller la position"
+                      IsCheckable="True" Click="OnToggleLock"/>
+            <MenuItem x:Name="StartupItem" Header="Démarrer avec Windows"
+                      IsCheckable="True" Click="OnToggleStartup"/>
+            <Separator/>
+            <MenuItem Header="Quitter" Click="OnQuit"/>
+        </ContextMenu>
+    </Window.ContextMenu>
+
+    <!-- Le trace est defini une fois pour toutes a 220 pixels de diametre. La
+         taille reglable passe par cette mise a l'echelle, ce qui evite de
+         recalculer huit rayons de sillons a chaque changement. -->
+    <Grid x:Name="Root" Background="{x:Null}">
+        <Grid.LayoutTransform>
+            <ScaleTransform x:Name="Scale" ScaleX="1" ScaleY="1"/>
+        </Grid.LayoutTransform>
+
+        <!-- Le disque et le cartouche de texte sont empiles. Le code bascule
+             l'orientation entre verticale (texte dessous) et horizontale
+             (texte a droite). -->
+        <StackPanel x:Name="Stack" Orientation="Vertical"
+                    HorizontalAlignment="Center" VerticalAlignment="Center">
+
+        <Grid x:Name="DiscBox" Width="252" Height="252">
+
+        <!-- Couche fixe : le corps du disque et son ombre portee.
+             Elle ne tourne pas, ce qui evite de recalculer l'ombre a chaque
+             image : un DropShadowEffect sur un element anime est l'une des
+             sources de charge CPU les plus courantes en WPF. -->
+        <Ellipse Width="220" Height="220"
+                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                 Fill="{DynamicResource DiscBrush}">
+            <!-- Le flou de l'ombre est calcule une fois pour toutes et conserve
+                 en texture : sans ce cache, le rendu logiciel impose par la
+                 transparence le recalculerait a chaque image. -->
+            <Ellipse.CacheMode>
+                <BitmapCache RenderAtScale="1" EnableClearType="False"/>
+            </Ellipse.CacheMode>
+            <Ellipse.Effect>
+                <DropShadowEffect BlurRadius="16" ShadowDepth="4" Direction="270"
+                                  Color="#FF000000" Opacity="0.55"/>
+            </Ellipse.Effect>
+        </Ellipse>
+
+        <!-- Sillons concentriques. Traits fins et peu contrastes : ils doivent
+             se deviner, pas se compter.
+
+             Ils restent dans la couche fixe a dessein. Etant parfaitement
+             concentriques, les faire tourner ne produirait aucune difference
+             visible tout en obligeant le processeur a les recomposer a chaque
+             image. Le seul element asymetrique du disque est la pochette :
+             c'est donc elle, et elle seule, qui a besoin de tourner. -->
+        <Grid x:Name="Grooves" Width="220" Height="220"
+              HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Grid.CacheMode>
+                <BitmapCache RenderAtScale="1" EnableClearType="False"/>
+            </Grid.CacheMode>
+
+            <Ellipse Width="212" Height="212" Stroke="{DynamicResource GrooveBrush}" StrokeThickness="1" Opacity="0.7"/>
+            <Ellipse Width="198" Height="198" Stroke="{DynamicResource GrooveBrush}" StrokeThickness="1" Opacity="0.6"/>
+            <Ellipse Width="184" Height="184" Stroke="{DynamicResource GrooveBrush}" StrokeThickness="1" Opacity="0.6"/>
+            <Ellipse Width="170" Height="170" Stroke="{DynamicResource GrooveBrush}" StrokeThickness="1" Opacity="0.5"/>
+            <Ellipse Width="156" Height="156" Stroke="{DynamicResource GrooveBrush}" StrokeThickness="1" Opacity="0.5"/>
+            <Ellipse Width="142" Height="142" Stroke="{DynamicResource GrooveBrush}" StrokeThickness="1" Opacity="0.45"/>
+            <Ellipse Width="128" Height="128" Stroke="{DynamicResource GrooveBrush}" StrokeThickness="1" Opacity="0.45"/>
+            <Ellipse Width="114" Height="114" Stroke="{DynamicResource GrooveBrush}" StrokeThickness="1" Opacity="0.4"/>
+        </Grid>
+
+        <!-- Couche tournante : le label, c'est-a-dire la pochette. L'ellipse
+             fait office de geometrie de decoupe pour l'ImageBrush, renseigne
+             par le code au changement de morceau. -->
+        <Ellipse x:Name="Label" Width="96" Height="96"
+                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                 RenderTransformOrigin="0.5,0.5"
+                 Fill="#FF2C2C2C">
+            <Ellipse.CacheMode>
+                <BitmapCache RenderAtScale="1" EnableClearType="False"/>
+            </Ellipse.CacheMode>
+            <Ellipse.RenderTransform>
+                <RotateTransform x:Name="Rotation" Angle="0"/>
+            </Ellipse.RenderTransform>
+        </Ellipse>
+
+        <!-- Lisere sombre entre le label et les sillons. -->
+        <Ellipse Width="96" Height="96"
+                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                 Stroke="#FF000000" StrokeThickness="1.5" Opacity="0.8"/>
+
+        <!-- Trou de broche, pose par-dessus le label. -->
+        <Ellipse Width="11" Height="11"
+                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                 Fill="#FF08080A" Stroke="#FF2A2A2A" StrokeThickness="0.75"/>
+        </Grid>
+
+            <!-- Cartouche titre et artiste, dans l'esprit des credits imprimes
+                 sur une etiquette de disque : titre lisible, artiste en petites
+                 capitales espacees, separes par un court filet a la couleur de
+                 la pochette.
+
+                 IsHitTestVisible a faux : le texte est un affichage, pas un
+                 controle. Les clics le traversent et vont au bureau, ce qui
+                 evite d'agrandir par surprise la zone cliquable du widget. -->
+            <StackPanel x:Name="TrackInfo" Width="200" IsHitTestVisible="False"
+                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Margin="0,2,0,0">
+                <StackPanel.Effect>
+                    <!-- Le texte doit rester lisible sur n'importe quel fond
+                         d'ecran. Une ombre diffuse sans decalage cree un halo
+                         sombre qui detache les lettres sans encadrer le bloc.
+                         Elle ne coute rien : ce contenu ne s'anime pas. -->
+                    <DropShadowEffect BlurRadius="10" ShadowDepth="0"
+                                      Color="#FF000000" Opacity="0.9"/>
+                </StackPanel.Effect>
+
+                <TextBlock x:Name="TrackTitle"
+                           Text="—"
+                           FontFamily="Bahnschrift, Segoe UI Variable Text, Segoe UI"
+                           FontSize="15" FontWeight="SemiBold"
+                           Foreground="#FFEDE7DC"
+                           TextTrimming="CharacterEllipsis"
+                           TextAlignment="Center"/>
+
+                <Rectangle x:Name="TrackRule"
+                           Width="26" Height="1" Margin="0,6,0,6"
+                           HorizontalAlignment="Center"
+                           Fill="{DynamicResource AccentBrush}"/>
+
+                <TextBlock x:Name="TrackArtist"
+                           Text=""
+                           FontFamily="Bahnschrift, Segoe UI Variable Text, Segoe UI"
+                           FontSize="10.5"
+                           Foreground="#FF9A9289"
+                           TextTrimming="CharacterEllipsis"
+                           TextAlignment="Center"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

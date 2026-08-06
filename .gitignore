@@ -1,0 +1,15 @@
+# Sorties de compilation. L'executable autonome pese pres de 180 Mo :
+# il n'a rien a faire dans l'historique, il se reconstruit en une commande.
+bin/
+obj/
+
+# Fichiers utilisateur de Visual Studio / Rider
+.vs/
+.idea/
+*.user
+*.suo
+
+# Divers
+*.log
+Thumbs.db
+desktop.ini

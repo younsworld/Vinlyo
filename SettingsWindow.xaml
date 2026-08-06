@@ -1,0 +1,461 @@
+<Window x:Class="Vinlyo.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Vinlyo"
+        Width="430" SizeToContent="Height"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen"
+        Background="Transparent"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType"
+        UseLayoutRounding="True">
+
+    <Window.Resources>
+
+        <!-- Palette tiree de l'objet : laque, feutrine de plateau, aretes
+             usinees, papier d'etiquette, credits imprimes. Aucune couleur vive
+             en dur : le seul accent vient de la pochette en cours de lecture,
+             et le code le remplace a chaque changement de morceau. -->
+        <SolidColorBrush x:Key="Lacquer"  Color="#FF0F0E0D"/>
+        <SolidColorBrush x:Key="Platter"  Color="#FF171614"/>
+        <SolidColorBrush x:Key="Edge"     Color="#FF2B2825"/>
+        <SolidColorBrush x:Key="Paper"    Color="#FFEDE7DC"/>
+        <SolidColorBrush x:Key="Credits"  Color="#FF8B847A"/>
+        <SolidColorBrush x:Key="AccentBrush" Color="#FFB9AF9E"/>
+
+        <FontFamily x:Key="Display">Bahnschrift, Segoe UI Variable Text, Segoe UI</FontFamily>
+        <FontFamily x:Key="Numerals">Cascadia Mono, Consolas, Courier New</FontFamily>
+
+        <!-- Texte courant d'une ligne de reglage. -->
+        <Style TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource Display}"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="Foreground" Value="{StaticResource Paper}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- Intitule de section : petites capitales espacees, comme les
+             mentions serigraphiees sur le chassis d'une platine. -->
+        <Style x:Key="Eyebrow" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource Display}"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="Foreground" Value="{StaticResource Credits}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+
+        <!-- Valeur chiffree : chasse fixe, pour que le curseur ne se decale pas
+             quand le nombre change de largeur. -->
+        <Style x:Key="Readout" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource Numerals}"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+            <Setter Property="TextAlignment" Value="Right"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style x:Key="Hint" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource Display}"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="{StaticResource Credits}"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="LineHeight" Value="16"/>
+        </Style>
+
+        <!-- Curseur en fader de pitch : rail fin, portion parcourue a la
+             couleur de la pochette, capuchon usine avec son trait d'index. -->
+        <Style x:Key="Rail" TargetType="RepeatButton">
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RepeatButton">
+                        <Border Height="3" CornerRadius="1.5"
+                                Background="{StaticResource Edge}"
+                                VerticalAlignment="Center"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="RailFilled" TargetType="RepeatButton" BasedOn="{StaticResource Rail}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RepeatButton">
+                        <Border Height="3" CornerRadius="1.5"
+                                Background="{DynamicResource AccentBrush}"
+                                VerticalAlignment="Center"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="FaderCap" TargetType="Thumb">
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Width" Value="13"/>
+            <Setter Property="Height" Value="21"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <Grid>
+                            <Border x:Name="Cap" CornerRadius="2.5"
+                                    Background="#FF3B3733" BorderBrush="#FF544D46"
+                                    BorderThickness="1"/>
+                            <Rectangle Width="7" Height="1"
+                                       Fill="{DynamicResource AccentBrush}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Cap" Property="Background" Value="#FF48433D"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="Fader" TargetType="Slider">
+            <Setter Property="Height" Value="22"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Slider">
+                        <Grid x:Name="Body">
+                            <Track x:Name="PART_Track">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Style="{StaticResource RailFilled}"
+                                                  Command="Slider.DecreaseLarge"/>
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb Style="{StaticResource FaderCap}"/>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Style="{StaticResource Rail}"
+                                                  Command="Slider.IncreaseLarge"/>
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Body" Property="Opacity" Value="0.3"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Case a cocher : carre a arete fine qui se remplit de la couleur du
+             morceau, coche sombre pour rester lisible sur le remplissage. -->
+        <Style TargetType="CheckBox">
+            <Setter Property="FontFamily" Value="{StaticResource Display}"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="Foreground" Value="{StaticResource Paper}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <StackPanel Orientation="Horizontal" Background="Transparent">
+                            <Grid Width="15" Height="15" VerticalAlignment="Center">
+                                <Border x:Name="Box" CornerRadius="3.5"
+                                        Background="#FF121110"
+                                        BorderBrush="{StaticResource Edge}" BorderThickness="1"/>
+                                <Path x:Name="Tick" Visibility="Collapsed"
+                                      Data="M 3.5 7.5 L 6 10 L 11 4"
+                                      Stroke="#FF0F0E0D" StrokeThickness="1.8"
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                      StrokeLineJoin="Round"/>
+                            </Grid>
+                            <ContentPresenter Margin="10,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Box" Property="Background" Value="{DynamicResource AccentBrush}"/>
+                                <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                                <Setter TargetName="Tick" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Box" Property="BorderBrush" Value="#FF4A443D"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.35"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Choix de mode : pastille pleine a la couleur du morceau. -->
+        <Style TargetType="RadioButton">
+            <Setter Property="FontFamily" Value="{StaticResource Display}"/>
+            <Setter Property="FontSize" Value="12.5"/>
+            <Setter Property="Foreground" Value="{StaticResource Paper}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <StackPanel Orientation="Horizontal" Background="Transparent">
+                            <Grid Width="15" Height="15" VerticalAlignment="Center">
+                                <Ellipse x:Name="Ring" Stroke="{StaticResource Edge}"
+                                         StrokeThickness="1" Fill="#FF121110"/>
+                                <Ellipse x:Name="Dot" Width="7" Height="7" Visibility="Collapsed"
+                                         Fill="{DynamicResource AccentBrush}"/>
+                            </Grid>
+                            <ContentPresenter Margin="10,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Dot" Property="Visibility" Value="Visible"/>
+                                <Setter TargetName="Ring" Property="Stroke" Value="{DynamicResource AccentBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Ring" Property="Stroke" Value="#FF4A443D"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Pastilles d'un selecteur segmente. Remplacent une liste deroulante :
+             quatre valeurs se lisent d'un coup d'oeil et se changent d'un clic. -->
+        <Style x:Key="Segment" TargetType="RadioButton">
+            <Setter Property="FontFamily" Value="{StaticResource Display}"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="Foreground" Value="{StaticResource Credits}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="0,0,6,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Pill" CornerRadius="4" Background="#FF121110"
+                                BorderBrush="{StaticResource Edge}" BorderThickness="1"
+                                Padding="11,4,11,5">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Pill" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Pill" Property="Background" Value="#FF1B1917"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.3"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="Button">
+            <Setter Property="FontFamily" Value="{StaticResource Display}"/>
+            <Setter Property="FontSize" Value="11.5"/>
+            <Setter Property="Foreground" Value="{StaticResource Paper}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Face" CornerRadius="4" Background="#FF121110"
+                                BorderBrush="{StaticResource Edge}" BorderThickness="1"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Face" Property="Background" Value="#FF211E1B"/>
+                                <Setter TargetName="Face" Property="BorderBrush" Value="#FF4A443D"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.3"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+    </Window.Resources>
+
+    <!-- La marge laisse la place a l'ombre portee du panneau. -->
+    <Border Margin="14" CornerRadius="12"
+            Background="{StaticResource Lacquer}"
+            BorderBrush="{StaticResource Edge}" BorderThickness="1">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="26" ShadowDepth="6" Direction="270"
+                              Color="#FF000000" Opacity="0.6"/>
+        </Border.Effect>
+
+        <StackPanel Margin="26,0,26,22">
+
+            <!-- Barre de titre maison : la fenetre n'a pas de chrome systeme,
+                 c'est cette bande qui la deplace et qui la ferme. -->
+            <Grid x:Name="TitleBar" Height="52" Background="Transparent"
+                  MouseLeftButtonDown="OnDragWindow">
+                <TextBlock Text="VINLYO" Style="{StaticResource Eyebrow}"
+                           FontSize="11.5" VerticalAlignment="Center"/>
+                <Button Content="✕" Width="26" Height="26" Padding="0"
+                        HorizontalAlignment="Right" VerticalAlignment="Center"
+                        FontSize="10" Click="OnClose"/>
+            </Grid>
+
+            <Rectangle Height="1" Fill="{StaticResource Edge}" Margin="0,0,0,20"/>
+
+            <!-- DISQUE -->
+            <TextBlock Text="DISQUE" Style="{StaticResource Eyebrow}" Margin="0,0,0,14"/>
+
+            <Grid Margin="0,0,0,14">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="118"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="62"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Taille"/>
+                <Slider x:Name="SizeSlider" Grid.Column="1" Style="{StaticResource Fader}"
+                        Minimum="120" Maximum="400" TickFrequency="10" IsSnapToTickEnabled="True"
+                        ValueChanged="OnSizeChanged" Margin="0,0,12,0"/>
+                <TextBlock x:Name="SizeValue" Grid.Column="2" Style="{StaticResource Readout}"/>
+            </Grid>
+
+            <CheckBox x:Name="TintCheck" Content="Prendre la couleur de la pochette"
+                      Checked="OnTintToggled" Unchecked="OnTintToggled" Margin="0,0,0,14"/>
+
+            <Grid Margin="0,0,0,22">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="118"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="62"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="TintLabel" Text="Intensité"/>
+                <Slider x:Name="TintSlider" Grid.Column="1" Style="{StaticResource Fader}"
+                        Minimum="0" Maximum="1"
+                        ValueChanged="OnTintStrengthChanged" Margin="0,0,12,0"/>
+                <TextBlock x:Name="TintValue" Grid.Column="2" Style="{StaticResource Readout}"/>
+            </Grid>
+
+            <Rectangle Height="1" Fill="{StaticResource Edge}" Margin="0,0,0,20"/>
+
+            <!-- ROTATION -->
+            <TextBlock Text="ROTATION" Style="{StaticResource Eyebrow}" Margin="0,0,0,14"/>
+
+            <RadioButton x:Name="FixedRadio" GroupName="Speed" Content="Vitesse constante"
+                         Checked="OnSpeedModeChanged" Margin="0,0,0,12"/>
+
+            <Grid Margin="25,0,0,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="112"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="62"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="TurnLabel" Text="Durée d'un tour"/>
+                <Slider x:Name="TurnSlider" Grid.Column="1" Style="{StaticResource Fader}"
+                        Minimum="1" Maximum="20" TickFrequency="0.5" IsSnapToTickEnabled="True"
+                        ValueChanged="OnTurnSecondsChanged" Margin="0,0,12,0"/>
+                <TextBlock x:Name="TurnValue" Grid.Column="2" Style="{StaticResource Readout}"/>
+            </Grid>
+
+            <RadioButton x:Name="BpmRadio" GroupName="Speed" Content="Suivre le tempo du morceau"
+                         Checked="OnSpeedModeChanged" Margin="0,0,0,12"/>
+
+            <Grid Margin="25,0,0,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="112"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="BeatsLabel" Text="Un tour tous les"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <RadioButton x:Name="Beat1" GroupName="Beats" Style="{StaticResource Segment}"
+                                 Content="1" Checked="OnBeatsChanged"/>
+                    <RadioButton x:Name="Beat2" GroupName="Beats" Style="{StaticResource Segment}"
+                                 Content="2" Checked="OnBeatsChanged"/>
+                    <RadioButton x:Name="Beat4" GroupName="Beats" Style="{StaticResource Segment}"
+                                 Content="4" Checked="OnBeatsChanged"/>
+                    <RadioButton x:Name="Beat8" GroupName="Beats" Style="{StaticResource Segment}"
+                                 Content="8" Checked="OnBeatsChanged"/>
+                    <TextBlock x:Name="BeatsUnit" Text="temps" Margin="4,0,0,0"
+                               Foreground="{StaticResource Credits}" FontSize="11.5"/>
+                </StackPanel>
+            </Grid>
+
+            <Grid Margin="25,0,0,10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="112"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="TempoLabel" Text="Tempo mesuré"/>
+                <TextBlock x:Name="BpmText" Grid.Column="1" Style="{StaticResource Readout}"
+                           TextAlignment="Left" Margin="0,0,10,0"/>
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <Button x:Name="DoubleButton" Content="×2" Width="40" Padding="0,4,0,5"
+                            FontSize="12.5" Margin="0,0,6,0" Click="OnDoubleBpm"/>
+                    <Button x:Name="HalveButton" Content="÷2" Width="40" Padding="0,4,0,5"
+                            FontSize="12.5" Click="OnHalveBpm"/>
+                </StackPanel>
+            </Grid>
+
+            <TextBlock Style="{StaticResource Hint}" Margin="25,0,0,18"
+                       Text="Mesuré sur le son qui sort de vos haut-parleurs, pendant la lecture. Corrigez avec ×2 ou ÷2 si le disque tourne au double ou à la moitié de la vitesse."/>
+
+            <Rectangle Height="1" Fill="{StaticResource Edge}" Margin="0,0,0,20"/>
+
+            <!-- AFFICHAGE -->
+            <TextBlock Text="AFFICHAGE" Style="{StaticResource Eyebrow}" Margin="0,0,0,14"/>
+
+            <CheckBox x:Name="InfoCheck" Content="Afficher le titre et l'artiste"
+                      Checked="OnInfoToggled" Unchecked="OnInfoToggled" Margin="0,0,0,14"/>
+
+            <Grid Margin="25,0,0,22">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="112"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="PlacementLabel" Text="Position"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <RadioButton x:Name="BelowRadio" GroupName="Placement" Style="{StaticResource Segment}"
+                                 Content="Sous le disque" Checked="OnPlacementChanged"/>
+                    <RadioButton x:Name="RightRadio" GroupName="Placement" Style="{StaticResource Segment}"
+                                 Content="À droite" Checked="OnPlacementChanged"/>
+                </StackPanel>
+            </Grid>
+
+            <Rectangle Height="1" Fill="{StaticResource Edge}" Margin="0,0,0,20"/>
+
+            <!-- GESTES -->
+            <TextBlock Text="GESTES" Style="{StaticResource Eyebrow}" Margin="0,0,0,14"/>
+
+            <Grid Margin="0,0,0,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="118"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="62"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="Un tour déplace de"/>
+                <Slider x:Name="ScratchSlider" Grid.Column="1" Style="{StaticResource Fader}"
+                        Minimum="5" Maximum="120" TickFrequency="5" IsSnapToTickEnabled="True"
+                        ValueChanged="OnScratchChanged" Margin="0,0,12,0"/>
+                <TextBlock x:Name="ScratchValue" Grid.Column="2" Style="{StaticResource Readout}"/>
+            </Grid>
+
+            <TextBlock Style="{StaticResource Hint}" Margin="0,0,0,18"
+                       Text="Sur la pochette : 1 clic pause, 2 clics morceau suivant, 3 clics précédent. Sur les sillons : 1 clic met en pause sans attendre, et faire tourner le disque déplace la lecture. Ctrl + glisser déplace le widget."/>
+
+            <Rectangle Height="1" Fill="{StaticResource Edge}" Margin="0,0,0,20"/>
+
+            <!-- SYSTÈME -->
+            <TextBlock Text="SYSTÈME" Style="{StaticResource Eyebrow}" Margin="0,0,0,14"/>
+
+            <CheckBox x:Name="LockCheck" Content="Verrouiller la position"
+                      Checked="OnLockToggled" Unchecked="OnLockToggled" Margin="0,0,0,14"/>
+
+            <CheckBox x:Name="StartupCheck" Content="Démarrer avec Windows"
+                      Checked="OnStartupToggled" Unchecked="OnStartupToggled"/>
+        </StackPanel>
+    </Border>
+</Window>

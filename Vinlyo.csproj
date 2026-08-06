@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+
+    <!-- Le TFM "windows10.0.19041.0" est ce qui donne acces aux API WinRT
+         (Windows.Media.Control) sans le moindre paquet NuGet : le SDK genere
+         automatiquement les projections C#/WinRT pour cette version. -->
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+
+    <!-- Version minimale de Windows sur laquelle l'exe accepte de demarrer.
+         Windows 10 1809 : SMTC y est deja present. -->
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Requis par le sous-echantillonnage du flux audio capture, qui lit
+         directement le tampon rendu par WASAPI (AudioLoopback.cs). -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>Vinlyo</AssemblyName>
+    <RootNamespace>Vinlyo</RootNamespace>
+
+    <!-- Publication : un seul fichier, autonome, sans installation. -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <!-- WPF embarque des DLL natives : sans cette ligne elles restent a cote
+         de l'exe au lieu d'etre incluses dedans. -->
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <!-- Compression laissee a false volontairement : elle reduit la taille du
+         fichier mais oblige le runtime a decompresser les assemblies en
+         memoire au lieu de les mapper depuis le disque, ce qui fait tripler la
+         memoire privee du processus. Pour un widget qui reste ouvert en
+         permanence, la memoire compte davantage que les megaoctets sur disque. -->
+    <EnableCompressionInSingleFile>false</EnableCompressionInSingleFile>
+
+    <!-- Le GC concurrent maintient un thread d'arriere-plan en permanence.
+         Pour un widget qui alloue quasiment rien, c'est du CPU et de la RAM
+         payes pour rien : on repasse en GC workstation non concurrent. -->
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+
+    <!-- Reduit l'empreinte memoire : pas de compilation R2R redondante. -->
+    <TieredCompilationQuickStartupJit>true</TieredCompilationQuickStartupJit>
+  </PropertyGroup>
+
+</Project>
