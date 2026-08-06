@@ -7,6 +7,8 @@ la couleur de la pochette.
 Il se place au-dessus du fond d'écran mais sous toutes les fenêtres : il vit sur
 le bureau sans jamais passer devant ce que vous faites.
 
+**[Télécharger Vinlyo.exe](https://github.com/younsworld/Vinlyo/releases/latest/download/Vinlyo.exe)** — rien à installer, aucune dépendance, aucun compte.
+
 <img src="docs/vinlyo.png" width="252" alt="Le disque sur le bureau, avec le titre et l'artiste">
 <img src="docs/reglages.png" width="360" alt="La fenêtre de réglages">
 
