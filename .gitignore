@@ -3,6 +3,9 @@
 bin/
 obj/
 
+# Graphe de connaissances : sortie dérivée, se régénère avec /graphify
+graphify-out/
+
 # Fichiers utilisateur de Visual Studio / Rider
 .vs/
 .idea/
