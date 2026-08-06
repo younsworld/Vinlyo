@@ -21,6 +21,12 @@
     <AssemblyName>Vinlyo</AssemblyName>
     <RootNamespace>Vinlyo</RootNamespace>
 
+    <Version>1.0.0</Version>
+    <Product>Vinlyo</Product>
+    <Description>Un disque vinyle posé sur le bureau Windows</Description>
+    <Authors>younsworld</Authors>
+    <Copyright>© 2026 younsworld</Copyright>
+
     <!-- Publication : un seul fichier, autonome, sans installation. -->
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SelfContained>true</SelfContained>
